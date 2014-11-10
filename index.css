@@ -1,0 +1,130 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Iowan Old Style;
+    margin: 0;
+    padding: 0;
+}
+
+h1,h2,h3,h4,h5,h6 {
+    font-family: Avenir Next;
+}
+
+footer {
+    margin-top: 1em;
+    padding: 1em 3em;
+    background-color: #DDD;
+    width: 100%
+}
+
+footer p {
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* I can't help myself */
+
+.commentBox {
+    border: 1px solid #CCC;
+    border-radius: 4px;
+    padding: 1em;
+    margin-left: 1em;
+    margin-top: 1em;
+    width: 25%;
+    background: #666;
+}
+
+.commentBox h1 {
+    font-size: 1.2em;
+    font-weight: 500;
+    margin-top: 0;
+    color: white;
+}
+
+
+.commentList {
+    
+}
+
+.comment {
+    background: #EEE;
+    margin-bottom: .5em;
+    padding-left: .5em;
+    padding-top: .5em;
+    padding-bottom: .5em;
+    position: relative;
+}
+
+.comment span.action {
+    position: absolute;
+    top: 0;
+    color: #444;
+    cursor: pointer;
+    /* color: rgb(40,140,225); */
+    font-size: 1em;
+}
+
+.comment span.delete {
+    position: absolute;
+    top: 0;
+    right: .5em;
+}
+
+.comment span.edit {
+    right: 1.4em;
+}
+
+.comment h2.commentAuthor {
+    font-size: 0.8em;
+    font-weight: 500;
+    margin: 0 0 0 .5em;
+    padding: 0;
+}
+
+.comment span {
+    margin: .25em 0 0 1.5em;
+    padding: 0;
+    font-size: 0.9em;
+    display: block;
+}
+
+.comment span p {
+    margin: 0;
+    padding: 0;
+    font-size: 0.9em;
+}
+
+.comment span ul {
+    margin-top: 0.5em;
+}
+
+.commentForm {
+    font-size: 1em;
+}
+
+.commentForm input, .commentForm textarea {
+    display: block;
+    margin-bottom: 0.5em;
+    font-family: Avenir Next;
+    padding: 0.25em 0 0.25em 0.5em;
+    font-size: .8em;
+    border: 1px solid #CCC;
+}
+
+.commentForm input[type="submit"] {
+    width: 10em;
+}
+
+.commentForm input[name="name"] {
+    width: 10em;
+}
+
+.commentForm textarea[name="comment"] {
+    width: 20em;
+    height: 5em;
+    text-align: top;
+    
+    
+}

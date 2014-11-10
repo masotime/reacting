@@ -1,0 +1,26 @@
+<html>
+    <head>
+        <title>Fiddling with React</title>
+        <link rel="stylesheet" href="index.css">
+        <script src="http://fb.me/react-0.12.0.js"></script>
+        <script src="http://fb.me/JSXTransformer-0.12.0.js"></script>
+        <script src="http://code.jquery.com/jquery-1.10.0.min.js"></script>
+        <script src="http://cdnjs.cloudflare.com/ajax/libs/showdown/0.3.1/showdown.min.js"></script>
+        <script src="https://cdn.firebase.com/js/client/2.0.2/firebase.js"></script>
+    </head>
+    <body>
+        <div id="content"></div>
+        <footer>
+            <p>This is a footer<sup>&trade;</sup></p>
+        </footer>
+    </body>
+    <script type="text/jsx" src="tutorial.jsx"></script>
+    <script type="text/jsx">
+        var fb = new Firebase("https://boiling-inferno-3245.firebaseio.com/");
+        
+        React.render(
+          <CommentBox url="comments.json" pollInterval={2000} />,
+          document.getElementById('content')
+        );
+    </script>
+</html>
