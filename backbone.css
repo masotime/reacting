@@ -23,3 +23,7 @@ footer p {
     margin: 0 auto;
     text-align: center;
 }
+
+.card .picture img {
+    max-width: 400px;
+}

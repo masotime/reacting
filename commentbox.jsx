@@ -1,3 +1,4 @@
+// adapted from http://facebook.github.io/react/docs/tutorial.html
 var fb = new Firebase("https://boiling-inferno-3245.firebaseio.com/");
 
 // seriously the tutorial is confusing beyond belief.
