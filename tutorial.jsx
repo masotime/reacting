@@ -8,19 +8,6 @@ var fb = new Firebase("https://boiling-inferno-3245.firebaseio.com/");
 
 // CommentBox - this is the head of the tree
 var CommentBox = React.createClass({
-    // this makes it respond to state
-    loadCommentsFromServer: function() {
-    
-        var that = this;
-    
-        // use firebase instead
-        fb.on("value", function(snapshot) {
-            that.setState({data: snapshot.val().comments});
-        }, function(error) {
-            console.error(error);
-        });
-        
-    },
     // bubbling of event from the CommentForm component
     handleCommentSubmit: function(comment) {
         // we optimistically assume that the comment will be posted without problems
@@ -64,8 +51,14 @@ var CommentBox = React.createClass({
         return { data: [] };
     },
     componentDidMount: function() {
-        this.loadCommentsFromServer();
-        setInterval(this.loadCommentsFromServer, this.props.pollInterval); // Note that we must define the property "pollInterval"
+        var that = this;
+    
+        // use firebase instead. since this is evented, we don't need setInterval from the tutorial
+        fb.on("value", function(snapshot) {
+            that.setState({data: snapshot.val().comments});
+        }, function(error) {
+            console.error(error);
+        });
     },
     render: function() {
         // it could also use {this.props.data}, but then it would be immutable / static
