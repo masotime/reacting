@@ -1,0 +1,29 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Iowan Old Style;
+    margin: 0;
+    padding: 0;
+}
+
+h1,h2,h3,h4,h5,h6 {
+    font-family: Avenir Next;
+}
+
+footer {
+    margin-top: 1em;
+    padding: 1em 3em;
+    background-color: #DDD;
+    width: 100%
+}
+
+footer p {
+    margin: 0 auto;
+    text-align: center;
+}
+
+.card .picture img {
+    max-width: 400px;
+}

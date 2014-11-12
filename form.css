@@ -1,0 +1,107 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Iowan Old Style;
+    margin: 0;
+    padding: 0;
+}
+
+h1,h2,h3,h4,h5,h6 {
+    font-family: Avenir Next;
+    font-weight: 500;
+}
+
+footer {
+    margin-top: 1em;
+    padding: 1em 3em;
+    background-color: #DDD;
+    width: 100%
+}
+
+footer p {
+    margin: 0 auto;
+    text-align: center;
+}
+
+.card .picture img {
+    max-width: 400px;
+}
+
+/* Experimental form input */
+#form {
+    padding: 1em;
+}
+
+.inputField {
+    position: relative;
+}
+
+.inputField label {
+    clear: both;
+    font-size: 0.8em;
+    margin-bottom: .3em;
+    position: relative;
+    left: .2em;
+    padding: 0 .3em;
+    z-index: 1000;
+    background: white;
+}
+
+.inputField input {
+    display: block;
+    font-size: .9em;
+    padding: 0.6em 1em .3em .5em;
+    position: relative;
+    top: -10px;
+    border: 1px solid #000;
+}
+
+.inputField input:focus {
+    border: 1px solid #57a9d9;
+}
+
+.inputField.hasError input{
+    color: #de746a;
+}
+
+.inputField.hasError input {
+    border-color: #de746a;
+}
+
+span.errors, span.hints {
+    font-family: Avenir Next;
+}
+
+span.errors, span.hints {
+    display: inline-block;
+    position: absolute;
+    border-radius: 5px;
+    box-shadow: 0 5px 5px rgba(0,0,0,.5);
+    bottom: -2.1em;
+    font-size: 0.8em;    
+}
+
+span.errors {
+    background-color: #f7ebeb;
+    border: 1px solid #eeddac;
+}
+
+span.hints {
+    background-color: rgb(244,248,251);
+    border: 1px solid rgb(206,224,235);
+}
+
+span.errors ul, span.hints ul {
+    margin: .3em;
+    padding: 0 .5em;
+    background-color: transparent;
+    list-style-type: none;
+}
+
+span.errors ul li, span.hints ul li {
+    background-color: transparent;    
+    position: relative;
+    line-height: 2;
+}
