@@ -1,14 +1,19 @@
 <html>
     <head>
-        <link rel="stylesheet" href="form.css" />
+        <link rel="stylesheet" href="paypal.css" />
         <script src="//fb.me/react-0.12.0.js"></script>
         <script src="//fb.me/JSXTransformer-0.12.0.js"></script>        
     </head>
     <body>
-        <h1>Form Input w/React</h1>
-        <div id="container"></div>
-        <button>Validate</button>
-        <script type="text/jsx" src="form.jsx"></script>
+        <h1>PayPal Form UED</h1>
+        <form>
+            <div id="textbox"></div>
+            <div id="password"></div>            
+            <div id="disabled-textbox"></div>
+            <div id="select"></div>
+        </form>
+        <button id="submit">Submit</button>
+        <script type="text/jsx" src="paypal.jsx"></script>
         <script type="text/jsx">
             // dump validators here for now
             var validators = {
@@ -21,13 +26,10 @@
                     if (value.length === 0) {
                         return 'This field is required.';
                     }
-                }
-            };
-            
-            var helpers = {
+                },
                 basicHint: function(value, context) {
                     if (value.length === 0) {
-                        return 'The product name that your customers will see on your website';
+                        return 'Field error messaging';
                     }
                 },
                 min8Chars: function(value) {
@@ -45,20 +47,31 @@
                         return 'Don\'t use 4 or more repeated characters';
                     }
                 }
-                
             };
 
             var triggers = [];
             var push = function (trigger) {
                 triggers.push(trigger);
             };
-
-            var rForm = React.render(
-                <TextField placeholder="your password here" label="Password" name="password" validators={[helpers.min8Chars, helpers.numberOrSymbol,helpers.noRepeat]} helpers={[]} pushTrigger={push} />
-                , document.getElementById('container')
+            
+            React.render(
+                <TextField className="paypal-input" label="Field label" name="textbox" validators={[validators.required]} helpers={[]} pushTrigger={push} />
+                , document.getElementById('textbox')
             );
+            
+            React.render(
+                <TextField className="paypal-input" type="password" label="Password" name="password" validators={[validators.min8Chars, validators.numberOrSymbol, validators.noRepeat]} helpers={[]} pushTrigger={push} />
+                , document.getElementById('password')
+            );
+            
+            React.render(
+                <TextField className="paypal-input" label="Field label" name="disabled" validators={[validators.noRepeat]} helpers={[validators.basicHint]} pushTrigger={push} disabled="disabled" />
+                , document.getElementById('disabled-textbox')
+            );
+            
 
-            document.getElementsByTagName('button')[0].onclick = function() {
+            document.getElementById('submit').onclick = function(e) {
+                e.preventDefault();
                 triggers.forEach(function(trigger) {
                     trigger();
                 });

@@ -1,0 +1,193 @@
+/* convenience */
+
+form div {
+    display: inline-block;
+    margin-right: 1em;
+}
+* {
+	box-sizing: border-box;
+}
+
+body {
+    margin: 2em;
+}
+
+/* paypal specific */
+
+body {
+	font-family: 'Helvetica Neue';
+    font-weight: 300;
+	font-size: 16px;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+}
+
+/*::-webkit-input-placeholder, :-moz-placeholder, ::-moz-placeholder, :-ms-input-placeholder 
+{
+   
+}*/
+
+div.paypal-input {
+    position: relative;
+}
+
+div.paypal-input input {
+    font-size: 14px;
+    font-family: 'Helvetica Neue';
+    font-weight: 300;
+    letter-spacing: 0.4px;
+    position: relative;
+    z-index: 100;
+}
+
+div.paypal-input input::-webkit-input-placeholder {
+    color: #6c7378;
+}
+
+div.paypal-input label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+
+div.paypal-input input[type="text"], div.paypal-input input[type="password"]{
+    border: 1px solid #6c7378;
+    border-radius: 5px;
+    padding: 11px;
+    color: #2c2e2f;
+    width: 200px;
+    background: white;
+}
+
+/* disabled state */
+div.paypal-input input[type="text"]:disabled, div.paypal-input input[type="password"]:disabled {
+    color: #cbd2d6;
+    border: 1px solid #cbd2d6;
+}
+
+div.paypal-input input[type="text"]:disabled::-webkit-input-placeholder, div.paypal-input input[type="password"]:disabled::-webkit-input-placeholder {
+    color: #cbd2d6;
+}
+
+/* focus state */
+div.paypal-input input[type="text"]:focus, div.paypal-input input[type="password"]:focus {
+    border: 1px solid #009cde;
+    outline: none;
+}
+
+/* error state */
+div.paypal-input.has-error input[type="text"], div.paypal-input.has-error input[type="password"] {
+    border: 1px solid #c72e2e;
+    color: #c72e2e;
+    background: url(paypal-ui-sprites.png) right 4px top 3px no-repeat;
+    background-clip: padding-box;
+    background-attachment: scroll;
+    background-size: 32px;
+}
+
+div.paypal-input.has-error input[type="text"] + button.clear-input, div.paypal-input.has-error input[type="password"] + button.clear-input {
+    cursor: default;
+}
+
+div.paypal-input.has-error input[type="text"]:focus, div.paypal-input.has-error input[type="password"]:focus {
+    background-color: white;
+}
+
+div.paypal-input.has-error input[type="text"]:focus + button.clear-input, div.paypal-input.has-error input[type="password"]:focus + button.clear-input {
+    cursor:pointer;
+}
+
+/* clear widget */
+div.paypal-input input[type="text"] + button.clear-input, div.paypal-input input[type="password"] + button.clear-input {
+    position: absolute;
+    z-index: 100;
+    right: 10px;
+    top: 7px;
+    font-size: 16px;
+    
+    border: 0;
+    background: white;
+    color: #2c2e2f;
+    cursor: pointer;
+    opacity: 0;
+}
+
+div.paypal-input input[type="text"]:focus + button.clear-input, div.paypal-input input[type="password"]:focus + button.clear-input {
+    opacity: 1;
+}
+
+div.paypal-input input[type="text"] + button.clear-input:focus, div.paypal-input input[type="password"] + button.clear-input:focus {
+    opacity: 1;
+}
+
+
+/* messaging */
+div.paypal-input div.errors, div.paypal-input div.hints {
+    font-size: 14px;
+    font-family: 'Helvetica Neue';
+    font-weight: 300;
+    letter-spacing: 0.4px;
+    width: auto;
+    white-space: nowrap;
+    z-index: 0;
+    color: #2c2e2f;
+
+    padding: 11px;
+    padding-top: 16px;
+    display: block;
+    position: absolute;
+    top: 36px;
+    background: white;
+    border-radius: 5px;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;    
+}
+
+div.paypal-input div.hints {
+    border: 1px solid #009cde;
+    background: #f7f7ff;
+    
+}
+
+div.paypal-input div.errors {
+    border: 1px solid #c72e2e;
+    background: #fff7f7;
+}
+
+div.paypal-input div ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    padding-left: 12px;
+}
+
+div.paypal-input div ul li {
+    position: relative;
+    line-height: 20px;
+}
+
+div.paypal-input div ul li::before {
+    content: '\00b7';
+    font-weight: bold;
+    font-size: 24px;
+    position: absolute;
+    display: inline-block;
+    left: -11px;
+    top: -3px;
+    color: #c72e2e;
+}
+
+div.paypal-input div.errors ul li::before {
+    color: #c72e2e;
+}
+
+div.paypal-input div.hints ul li::before {
+    color: #009cde;
+}
+
+

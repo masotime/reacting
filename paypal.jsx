@@ -4,15 +4,20 @@ var TextField = React.createClass({
             errors: [],
             hints: [],
             processed: false, // validated and error state added if any
-            hasFocus: false
+            hasFocus: false,
+            hasText: false
         };
+    },
+    getDefaultProps: function() {
+        return {
+            type: 'text'
+        }
     },
     componentDidMount: function() {
         var self = this;
         var pushTrigger = this.props.pushTrigger;
         if (pushTrigger) {
             pushTrigger(function() {
-                console.log('boom!');
                 self.process();
             });
         }
@@ -26,6 +31,7 @@ var TextField = React.createClass({
         this.hint();
     },
     onChange: function() {
+        this.setState({ hasText: (this.refs.value.getDOMNode().value.length > 0) });
         this.hint();
     },
     process: function() {
@@ -46,18 +52,26 @@ var TextField = React.createClass({
         });
         this.setState({ hints: hints, errors: errors });
     },
+    reset: function() {
+        console.log('reset');
+        var inputEl = this.refs.value.getDOMNode();
+        inputEl.value = '';
+        inputEl.focus();        
+    },
     render: function() {
         var id = this.props.id || this.props.name;
         var label = this.props.label || this.props.name;
         var placeholder = this.props.placeholder || this.props.label;
-        var className = 'inputField';
+        var className = this.props.className || 'inputField';
         
         // determine some rendering toggles
         var current = this.state;
-        var containerClass, itemClass, infoArray, extraElement;
+        var containerClass, itemClass, inputType, infoArray, tooltip, clearWidget;
         
+        inputType = this.props.type === 'password' ? 'password' : 'text';
+
         if (current.processed && current.errors.length > 0) {
-            className += ' hasError';
+            className += ' has-error';
         }
         
         if (current.hasFocus) {
@@ -71,13 +85,18 @@ var TextField = React.createClass({
             }
         }
         
-        extraElement = containerClass ? <FieldInfo containerClass={containerClass} itemClass={itemClass} infoArray={infoArray} /> : null;
+        if (current.hasText) {
+            clearWidget = <FieldWidget className="clear-input" label="&times;" onClick={this.reset} />;
+        }
+        
+        tooltip = containerClass ? <FieldInfo containerClass={containerClass} itemClass={itemClass} infoArray={infoArray} /> : null;
         
         return (
             <div className={className}>
                 <label htmlFor={id}>{label}</label>
-                <input id={id} name={name} placeholder={placeholder} onBlur={this.onBlur} onFocus={this.onFocus} onChange={this.onChange} ref="value" />
-                {extraElement}
+                <input type={inputType} id={id} name={name} placeholder={placeholder} onBlur={this.onBlur} onFocus={this.onFocus} onChange={this.onChange} ref="value" disabled={this.props.disabled} />
+                {clearWidget}
+                {tooltip}
             </div>
         );
     }
@@ -93,21 +112,46 @@ var FieldInfo = React.createClass({
     },
     render: function() {
         var self = this;
-        var items = this.props.infoArray.map(function(info) {
+        var infoArray = self.props.infoArray;
+        var items = infoArray.map(function(info) {
             return <li className={self.props.itemClass}>{info}</li>;
         });
         
-        if (this.props.infoArray.length === 0) {
+        if (items.length === 0) {
             return null;
-        } else {
-            console.log('rendering components');
+        } else if (items.length === 1) {
             return (
-                <span className={this.props.containerClass}>
+                <div className={this.props.containerClass}>
+                    <span className={self.props.itemClass}>{infoArray[0]}</span>
+                </div>            
+            );
+        } else {
+            return (
+                <div className={this.props.containerClass}>
                     <ul>
                         {items}
                     </ul>
-                </span>
+                </div>
             );
         }
+    }
+});
+
+var FieldWidget = React.createClass({
+    getDefaultProps: function() {
+        return {
+            className: '',
+            label: ''
+        };
+    },
+    onClick: function(e) {
+        e.preventDefault();
+        if (this.props.onClick) {
+            this.props.onClick();
+        }
+    }, render: function() {
+        return (
+            <button tabIndex="-1" className={this.props.className} onClick={this.onClick}>{this.props.label}</button>
+        );
     }
 });

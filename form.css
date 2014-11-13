@@ -45,7 +45,7 @@ footer p {
     position: relative;
     left: .2em;
     padding: 0 .3em;
-    z-index: 1000;
+    z-index: 900;
     background: white;
 }
 
@@ -62,11 +62,12 @@ footer p {
     border: 1px solid #57a9d9;
 }
 
-.inputField.hasError input{
-    color: #de746a;
+.inputField.hasError {
+       color: #de746a;
 }
 
-.inputField.hasError input {
+.inputField.hasError input{
+   color: #de746a; 
     border-color: #de746a;
 }
 
@@ -79,13 +80,15 @@ span.errors, span.hints {
     position: absolute;
     border-radius: 5px;
     box-shadow: 0 5px 5px rgba(0,0,0,.5);
-    bottom: -2.1em;
-    font-size: 0.8em;    
+    top: calc( 3em + 5px );
+    font-size: 0.8em;
+    z-index: 1000;
 }
 
 span.errors {
     background-color: #f7ebeb;
     border: 1px solid #eeddac;
+    color: black;
 }
 
 span.hints {
