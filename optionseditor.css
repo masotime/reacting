@@ -1,0 +1,71 @@
+form div {
+    display: inline-block;
+    margin-right: 1em;
+}
+* {
+	box-sizing: border-box;
+}
+
+body {
+    margin: 2em;
+}
+
+/* paypal specific */
+
+body {
+	font-family: 'Helvetica Neue';
+    font-weight: 300;
+	font-size: 16px;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+    letter-spacing: 0.4px;
+}
+
+input[type="text"] {
+    font-size: 16px;
+    font-weight: 300;
+    padding: .3em;
+    
+}
+
+/* dropdown editor convenience styling */
+
+.options-editor {
+    max-width: 20em;
+}
+.options-editor, .dropdown-option-editor, .textfield-option-editor {
+    border: 1px solid #333;
+    border-radius: 3px;
+    padding: 1em;
+}
+
+.dropdown-option-editor, .textfield-option-editor {
+    position: relative;
+    margin-bottom: 1em;
+}
+
+.options-editor h4 {
+    margin: 0;
+}
+
+.editor-widget {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.option-price div {
+    display: inline-block;
+    width: 4em;
+    margin-top: 1em;
+}
+
+.option-price input {
+    width: 100%;
+}
+
+.option-price select {
+    font-size: 32px;
+    height: 32px;
+    -webkit-appearance: none;
+}

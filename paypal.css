@@ -115,6 +115,7 @@ div.paypal-input input[type="text"] + button.clear-input, div.paypal-input input
     color: #2c2e2f;
     cursor: pointer;
     opacity: 0;
+    outline: none;
 }
 
 div.paypal-input input[type="text"]:focus + button.clear-input, div.paypal-input input[type="password"]:focus + button.clear-input {
