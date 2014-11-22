@@ -30,21 +30,21 @@ input[type="text"] {
 
 /* dropdown editor convenience styling */
 
-.options-editor {
+.inputs-editor {
     max-width: 20em;
 }
-.options-editor, .dropdown-option-editor, .textfield-option-editor {
+.inputs-editor, .dropdown-input-editor, .textfield-input-editor {
     border: 1px solid #333;
     border-radius: 3px;
     padding: 1em;
 }
 
-.dropdown-option-editor, .textfield-option-editor {
+.dropdown-input-editor, .textfield-input-editor {
     position: relative;
     margin-bottom: 1em;
 }
 
-.options-editor h4 {
+.inputs-editor h4 {
     margin: 0;
 }
 
@@ -65,7 +65,8 @@ input[type="text"] {
 }
 
 .option-price select {
-    font-size: 32px;
+    font-size: 1em;
+    padding: .3em .5em;
     height: 32px;
     -webkit-appearance: none;
 }

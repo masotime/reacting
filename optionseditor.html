@@ -6,7 +6,7 @@
     </head>
     <body>
         <h1>Button Factory Options Editor</h1>
-        <div id="options-editor">
+        <div id="inputs-editor">
             
         </div>
         <script type="text/jsx" src="optionseditor.jsx"></script>
@@ -14,7 +14,7 @@
         <script type="text/jsx" src="productpricefield.jsx"></script>
         <script type="text/jsx">
         
-            var initialOptions = [
+            var initialInputs = [
                 {
                     type: 'dropdown',
                     data: {
@@ -42,8 +42,8 @@
             ];
             
             React.render(
-                <OptionsEditor options={initialOptions} />
-                , document.getElementById('options-editor')
+                <InputsEditor inputs={initialInputs} />
+                , document.getElementById('inputs-editor')
             );
         </script>
     </body>

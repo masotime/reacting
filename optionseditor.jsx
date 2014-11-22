@@ -1,31 +1,33 @@
-var OptionsEditor = React.createClass({
+var InputsEditor = React.createClass({
     getDefaultProps: function() {
         return {
-            className: 'options-editor'
+            className: 'inputs-editor',
+            currency: 'USD',
+            symbol: '$'
         };
     },
     componentWillMount: function() {
-        if (this.props.options) {
-            this.setState({options: this.props.options});
+        if (this.props.inputs) {
+            this.setState({inputs: this.props.inputs});
         }
     },
     getInitialState: function() {
         // store the physical dropdown / text editor data
         return {
-            options: []
+            inputs: []
         };
     },
-    resetOptions: function() {
-        this.setState({options: []});
+    removeInputs: function() {
+        this.setState({inputs: []});
     },
-    addDropdownOption: function() {
-        var currentOptions = this.state.options;
-        currentOptions.push({
+    addDropdownInput: function() {
+        var currentInputs = this.state.inputs;
+        currentInputs.push({
             type: 'dropdown',
             data: {
                 name: '',
-                currency: 'USD',
-                symbol: '$',
+                currency: this.props.currency,
+                symbol: this.props.symbol,
                 options: [
                     {
                         name: '',
@@ -38,40 +40,40 @@ var OptionsEditor = React.createClass({
                 ]
             }
         });
-        this.setState({options: currentOptions});
+        this.setState({inputs: currentInputs});
     },
-    addTextfieldOption: function() {
-        var currentOptions = this.state.options;
-        currentOptions.push({
+    addTextfieldInput: function() {
+        var currentInputs = this.state.inputs;
+        currentInputs.push({
             type: 'textfield',
             data: {
                 name: ''
             }
         });
-        this.setState({options: currentOptions});        
+        this.setState({inputs: currentInputs});        
     },
     render: function() {
         var className = this.props.className;
-        var options = this.state.options;
-        var optionComponents = this.state.options.map(function(option, index) {
-            switch(option.type) {
+        var inputs = this.state.inputs;
+        var inputComponents = inputs.map(function(input, index) {
+            switch(input.type) {
                 case 'dropdown':
-                    return <DropdownOptionEditor key={index} optionName={option.data.name} currency={option.currency} options={option.data.options} />;
+                    return <DropdownInputEditor key={index} inputName={input.data.name} currency={input.currency} options={input.data.options} />;
                 case 'textfield':
-                    return <TextfieldOptionEditor key={index} optionName={option.data.name} />;
+                    return <TextfieldInputEditor key={index} inputName={input.data.name} />;
             }
         });
         
         return (
             <div className={className}>
                 <h3>This is a preview</h3>
-                <Preview options={options} />
+                <Preview inputs={inputs} />
                 
                 <h3>This is the Options Editor</h3>
-                <button onClick={this.resetOptions}>Remove all options</button>
-                {optionComponents}
-                <button onClick={this.addDropdownOption}>Add dropdown option</button>
-                <button onClick={this.addTextfieldOption}>Add textfield option</button>
+                <button onClick={this.removeInputs}>Remove all inputs</button>
+                {inputComponents}
+                <button onClick={this.addDropdownInput}>Add dropdown input</button>
+                <button onClick={this.addTextfieldInput}>Add textfield input</button>
             </div>
         );
     }
@@ -80,25 +82,25 @@ var OptionsEditor = React.createClass({
 var Preview = React.createClass({
     getDefaultProps: function() {
         return {
-            options: []
+            inputs: []
         };
     },
     render: function() {
-        var options = this.props.options;
+        var inputs = this.props.inputs;
         
         return (
             <div>
             {
-                options.map(function(option, index) {
-                    switch (option.type) {
+                inputs.map(function(input, index) {
+                    switch (input.type) {
                         case 'dropdown':
                             return (
                                 <div key={index}>
-                                    <label>{option.data.name}</label>
-                                    <select name={'option-'+index}>
+                                    <label>{input.data.name}</label>
+                                    <select name={'input-'+index}>
                                     {
-                                        option.data.options.map(function(selectOption, index) {
-                                            return <option key={index} value={selectOption.price}>{selectOption.name} {option.data.symbol}{selectOption.price}</option>;
+                                        input.data.options.map(function(selectOption, index) {
+                                            return <option key={index} value={selectOption.price}>{selectOption.name} {input.data.symbol}{selectOption.price}</option>;
                                         })
                                     }
                                     </select>
@@ -107,8 +109,8 @@ var Preview = React.createClass({
                         case 'textfield':
                             return (
                                 <div key={index}>
-                                    <label>{option.data.name}</label>
-                                    <input type="text" name={'option-'+index} />
+                                    <label>{input.data.name}</label>
+                                    <input type="text" name={'input-'+index} />
                                 </div>
                             );
                     }
@@ -119,11 +121,11 @@ var Preview = React.createClass({
     }
 });
 
-var DropdownOptionEditor = React.createClass({
+var DropdownInputEditor = React.createClass({
     getDefaultProps: function() {
         return {
-            className: 'dropdown-option-editor',
-            optionName: '',
+            className: 'dropdown-input-editor',
+            inputName: '',
             options: [],
             currency: 'USD',
             symbol: '$',
@@ -134,7 +136,7 @@ var DropdownOptionEditor = React.createClass({
     },
     render: function() {
         var className = this.props.className;
-        var optionName = this.props.optionName;
+        var inputName = this.props.inputName;
         var currency = this.props.currency;
         var optionPriceFields = this.props.options.map(function(optionPrice, index) {
             return (
@@ -155,7 +157,7 @@ var DropdownOptionEditor = React.createClass({
         return (
             <div className={className}>
                 <EditorWidget />
-                <TextField onChange={this.onChange} label="Option name" value={optionName} className="paypal-input" validators={[validator]}/>
+                <TextField onChange={this.onChange} label="Option name" value={inputName} className="paypal-input" validators={[validator]}/>
                 {optionPriceFields}
             </div>
         );
@@ -202,20 +204,20 @@ var OptionPriceField = React.createClass({
     }
 });
 
-var TextfieldOptionEditor = React.createClass({
+var TextfieldInputEditor = React.createClass({
     getDefaultProps: function() {
         return {
             className: 'textfield-option-editor',
-            optionName: ''
+            inputName: ''
         };
     },
     onChange: function(value) {
         var onChange = this.props.onChange;
-        onChange && onChange({optionName: value});
+        onChange && onChange({inputName: value});
     },
     render: function () {
         var className = this.props.className;
-        var optionName = this.props.optionName;
+        var inputName = this.props.inputName;
         var validator = function(value) {
             if (value.length === 0) {
                 return 'Please give a name for this option';
@@ -226,7 +228,7 @@ var TextfieldOptionEditor = React.createClass({
         return (
             <div className={className}>
                 <EditorWidget />
-                <TextField label="Option name" className="paypal-input" onChange={this.onChange} value={optionName} validators={[validator]}/>
+                <TextField label="Option name" className="paypal-input" onChange={this.onChange} value={inputName} validators={[validator]}/>
             </div>
         );
     }
