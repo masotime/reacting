@@ -73,8 +73,8 @@
                 <div>
                     <select name={this.props.name} defaultValue={this.props.selected}>
                     {
-                        currencyList.map(function(currency) {
-                            return <option value={currency.code}>{currency.code}</option>;
+                        currencyList.map(function(currency, index) {
+                            return <option key={index} value={currency.code}>{currency.code}</option>;
                         })
                     }
                     </select>
