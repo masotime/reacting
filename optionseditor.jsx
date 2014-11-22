@@ -126,8 +126,11 @@ var DropdownOptionEditor = React.createClass({
             optionName: '',
             options: [],
             currency: 'USD',
-            symbol: '$'
+            symbol: '$',
+            key: 0
         };    
+    },
+    onChange: function() {
     },
     render: function() {
         var className = this.props.className;
@@ -152,7 +155,7 @@ var DropdownOptionEditor = React.createClass({
         return (
             <div className={className}>
                 <EditorWidget />
-                <TextField label="Option name" value={optionName} className="paypal-input" validators={[validator]}/>
+                <TextField onChange={this.onChange} label="Option name" value={optionName} className="paypal-input" validators={[validator]}/>
                 {optionPriceFields}
             </div>
         );
@@ -170,12 +173,12 @@ var OptionPriceField = React.createClass({
             key: 0
         }
     },
+    onChange: function() {
+    
+    },
     onDelete: function() {
-        var onDelete = this.props.onDelete,
-            key = this.props.key;
-        if (onDelete) {
-            onDelete(key); // inform the parent of the deletion
-        }
+        var onDelete = this.props.onDelete;
+        onDelete && onDelete();
     },
     render: function() {
         var className = this.props.className;
@@ -204,7 +207,11 @@ var TextfieldOptionEditor = React.createClass({
         return {
             className: 'textfield-option-editor',
             optionName: ''
-        };    
+        };
+    },
+    onChange: function(value) {
+        var onChange = this.props.onChange;
+        onChange && onChange({optionName: value});
     },
     render: function () {
         var className = this.props.className;
@@ -219,7 +226,7 @@ var TextfieldOptionEditor = React.createClass({
         return (
             <div className={className}>
                 <EditorWidget />
-                <TextField label="Option name" className="paypal-input" value={optionName} validators={[validator]}/>
+                <TextField label="Option name" className="paypal-input" onChange={this.onChange} value={optionName} validators={[validator]}/>
             </div>
         );
     }
