@@ -20,6 +20,58 @@ var InputsEditor = React.createClass({
     removeInputs: function() {
         this.setState({inputs: []});
     },
+    handle: function(action, path) {
+    
+        var self = this;
+        var navigate = function navigate(obj, trail) {
+            if (trail.length <= 1 || !obj.hasOwnProperty(trail[0])) {
+                return { obj: obj, key: trail[0] };
+            } else {
+                return navigate(obj[trail[0]], trail.slice(1));
+            }
+        };
+    
+        var update = function update(obj, path, value) {
+            var nav = navigate(obj, path.split('.'));
+            var obj = nav.obj;
+            var key = nav.key;
+            if (obj.hasOwnProperty(key)) {
+                obj[key] = value;
+            }
+        };
+        
+        var remove = function remove(obj, path) {
+            var nav = navigate(obj, path.split('.'));
+            var obj = nav.obj;
+            var key = nav.key;
+            
+            // respond according to the type
+            if (Array.isArray(obj)) {
+                obj.splice(key,1);
+            } else {
+                delete obj.key;
+            }
+        };
+        
+        return function(value) {
+            var current = self.state.inputs;
+            console.log('received action',action,'on path',path,'with value',value);
+            
+            // based on the action, react accordingly
+            switch(action) {
+                case 'UPDATE':
+                    update(current, path, value);
+                    break;
+                case 'DELETE':
+                    remove(current, path);
+                    break;
+            }
+            
+            // update the graph
+            self.setState({ inputs: current });
+            
+        };
+    },
     addDropdownInput: function() {
         var currentInputs = this.state.inputs;
         currentInputs.push({
@@ -55,16 +107,17 @@ var InputsEditor = React.createClass({
     render: function() {
         var className = this.props.className;
         var inputs = this.state.inputs;
+        var self = this;
         var inputComponents = inputs.map(function(input, index) {
             switch(input.type) {
                 case 'dropdown':
-                    return <DropdownInputEditor key={index} inputName={input.data.name} currency={input.currency} options={input.data.options} />;
+                    return <DropdownInputEditor key={index} jsonPath={index} trigger={self.handle} inputName={input.data.name} currency={input.currency} options={input.data.options} />;
                 case 'textfield':
-                    return <TextfieldInputEditor key={index} inputName={input.data.name} />;
+                    return <TextfieldInputEditor key={index} jsonPath={index} trigger={self.handle} inputName={input.data.name} />;
             }
         });
         
-        return (
+        var result = (
             <div className={className}>
                 <h3>This is a preview</h3>
                 <Preview inputs={inputs} />
@@ -76,6 +129,8 @@ var InputsEditor = React.createClass({
                 <button onClick={this.addTextfieldInput}>Add textfield input</button>
             </div>
         );
+                
+        return result;
     }
 });
 
@@ -100,7 +155,7 @@ var Preview = React.createClass({
                                     <select name={'input-'+index}>
                                     {
                                         input.data.options.map(function(selectOption, index) {
-                                            return <option key={index} value={selectOption.price}>{selectOption.name} {input.data.symbol}{selectOption.price}</option>;
+                                            return <option key={index} value={selectOption.price}>{[selectOption.name,input.data.symbol,selectOption.price].join(' ')}</option>;
                                         })
                                     }
                                     </select>
@@ -132,19 +187,31 @@ var DropdownInputEditor = React.createClass({
             key: 0
         };    
     },
-    onChange: function() {
+    trigger: function(action, componentPath) {
+        var upstreamTrigger = this.props.trigger,
+            ownPath = this.props.jsonPath;
+        
+        return function onChange(value) {
+            var upstreamPath = [ownPath, componentPath].reduce(function (acc, current) {
+               return current !== undefined && acc.concat(current.toString().split('.')) || acc;
+            }, []).join('.');
+            upstreamTrigger && upstreamTrigger(action, upstreamPath)(value);
+        };
     },
     render: function() {
         var className = this.props.className;
         var inputName = this.props.inputName;
         var currency = this.props.currency;
+        var trigger = this.trigger;
         var optionPriceFields = this.props.options.map(function(optionPrice, index) {
             return (
                 <OptionPriceField 
                     key={index} 
                     optionName={optionPrice.name}
                     price={optionPrice.price}
-                    curency={currency}
+                    currency={currency}
+                    jsonPath={'data.options.'+index}
+                    trigger={trigger}
                 />
             );      
         });
@@ -157,7 +224,7 @@ var DropdownInputEditor = React.createClass({
         return (
             <div className={className}>
                 <EditorWidget />
-                <TextField onChange={this.onChange} label="Option name" value={inputName} className="paypal-input" validators={[validator]}/>
+                <TextField onChange={this.trigger('UPDATE', 'data.name')} label="Option name" value={inputName} className="paypal-input" validators={[validator]}/>
                 {optionPriceFields}
             </div>
         );
@@ -175,32 +242,38 @@ var OptionPriceField = React.createClass({
             key: 0
         }
     },
-    onChange: function() {
-    
-    },
-    onDelete: function() {
-        var onDelete = this.props.onDelete;
-        onDelete && onDelete();
+    trigger: function(action, componentPath) {
+        var upstreamTrigger = this.props.trigger,
+            ownPath = this.props.jsonPath;
+        
+        return function onChange(value) {
+            var upstreamPath = [ownPath, componentPath].reduce(function (acc, current) {
+               return current !== undefined && acc.concat(current.toString().split('.')) || acc;
+            }, []).join('.');
+            upstreamTrigger && upstreamTrigger(action, upstreamPath)(value);
+        };
     },
     render: function() {
         var className = this.props.className;
         var optionName = this.props.optionName;
         var price = this.props.price;
         var currency = this.props.currency;
+        var trigger = this.trigger;
+        var ownPath = this.props.jsonPath;
         var deleteButton;
         
         if (this.props.removable) {
-            deleteButton = <button onClick={this.onDelete}>Delete</button>
+            deleteButton = <button onClick={trigger('DELETE')}>Delete</button>
         }
         
         return (
             <div className={className}>
-                <TextField placeholder="Option" className="paypal-input" value={optionName} />
-                <TextField placeholder="Price" className="paypal-input" value={price} />
+                <TextField onChange={trigger('UPDATE', 'name')} placeholder="Option" className="paypal-input" value={optionName} />
+                <TextField onChange={trigger('UPDATE', 'price')} placeholder="Price" className="paypal-input" value={price} />
                 <CurrencySelect />
                 {deleteButton}
             </div>
-        );
+        );        
     }
 });
 
@@ -211,13 +284,21 @@ var TextfieldInputEditor = React.createClass({
             inputName: ''
         };
     },
-    onChange: function(value) {
-        var onChange = this.props.onChange;
-        onChange && onChange({inputName: value});
+    trigger: function(action, componentPath) {
+        var upstreamTrigger = this.props.trigger,
+            ownPath = this.props.jsonPath;
+        
+        return function onChange(value) {
+            var upstreamPath = [ownPath, componentPath].reduce(function (acc, current) {
+               return current !== undefined && acc.concat(current.toString().split('.')) || acc;
+            }, []).join('.');
+            upstreamTrigger && upstreamTrigger(action, upstreamPath)(value);
+        };
     },
     render: function () {
         var className = this.props.className;
         var inputName = this.props.inputName;
+        var trigger = this.trigger;
         var validator = function(value) {
             if (value.length === 0) {
                 return 'Please give a name for this option';
@@ -228,7 +309,7 @@ var TextfieldInputEditor = React.createClass({
         return (
             <div className={className}>
                 <EditorWidget />
-                <TextField label="Option name" className="paypal-input" onChange={this.onChange} value={inputName} validators={[validator]}/>
+                <TextField label="Option name" className="paypal-input" onChange={trigger('UPDATE', 'data.name')} value={inputName} validators={[validator]}/>
             </div>
         );
     }

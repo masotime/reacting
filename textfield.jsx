@@ -67,7 +67,7 @@
         reset: function () {
             var inputEl = this.refs.value.getDOMNode();
             inputEl.value = '';
-            this.setState({ hasText: false });
+            this.onChange();
             inputEl.focus();        
         },
         render: function () {
