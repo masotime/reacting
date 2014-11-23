@@ -49,36 +49,3 @@
             );
         }
     });
-
-    // corresponds to currencyfield in the paypal project
-    var CurrencySelect = React.createClass({
-        getDefaultProps: function () {
-            return {
-                currencyList: [
-                    { code: 'USD', symbol_native: '$' }
-                ],
-                selected: 'USD',
-                name: 'currency_code'
-            };
-        },
-        componentWillMount: function() {
-            this.setState({
-                selected: this.props.selected
-            });
-        },
-        render: function () {
-            var selected = this.state.selected, currencyList = this.props.currencyList;
-
-            return (
-                <div>
-                    <select name={this.props.name} defaultValue={this.props.selected}>
-                    {
-                        currencyList.map(function(currency, index) {
-                            return <option key={index} value={currency.code}>{currency.code}</option>;
-                        })
-                    }
-                    </select>
-                </div>
-            );
-        }
-    });

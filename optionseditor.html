@@ -13,14 +13,23 @@
         <script type="text/jsx" src="textfield.jsx"></script>
         <script type="text/jsx" src="productpricefield.jsx"></script>
         <script type="text/jsx">
+            var currencies = [
+                { code: 'USD', symbol_native: '$' },
+                { code: 'EUR', symbol_native: '€' },
+                { code: 'GBP', symbol_native: '£' },
+                { code: 'INR', symbol_native: '₹' },
+                { code: 'JPY', symbol_native: '¥' },
+                { code: 'CNY', symbol_native: '¥' }
+            ];
+            
+            var currency = 'USD';
+            var symbol = '$';
         
             var initialInputs = [
                 {
                     type: 'dropdown',
                     data: {
                         name: 'Color',
-                        currency: 'USD',
-                        symbol: '$',
                         options: [
                             {
                                 name: 'Red',
@@ -42,7 +51,7 @@
             ];
             
             React.render(
-                <InputsEditor inputs={initialInputs} />
+                <InputsEditor inputs={initialInputs} currencies={currencies} currency={currency} symbol={symbol} />
                 , document.getElementById('inputs-editor')
             );
         </script>

@@ -3,19 +3,24 @@ var InputsEditor = React.createClass({
         return {
             className: 'inputs-editor',
             currency: 'USD',
-            symbol: '$'
+            symbol: '$',
+            maxDropdowns: 4,
+            maxTextfields: 2,
+            maxDropdownOptions: 10
         };
     },
     componentWillMount: function() {
-        if (this.props.inputs) {
-            this.setState({inputs: this.props.inputs});
-        }
+        this.props.inputs && this.setState({inputs: this.props.inputs});
+        this.props.currency && this.setState({currency: this.props.currency});
+        this.props.symbol && this.setState({symbol: this.props.symbol});
     },
     getInitialState: function() {
         // store the physical dropdown / text editor data
         return {
             inputs: [],
-            activeIndex: -1 // used for editing a specific index
+            activeIndex: -1, // used for editing a specific index
+            currency: 'USD',
+            symbol: '$'
         };
     },
     removeInputs: function() {
@@ -33,11 +38,14 @@ var InputsEditor = React.createClass({
         };
     
         var update = function update(obj, path, value) {
-            var nav = navigate(obj, path.split('.'));
-            var obj = nav.obj;
-            var key = nav.key;
-            if (obj.hasOwnProperty(key)) {
-                obj[key] = value;
+            var parts = path.split('.');
+            var nav = navigate(obj, parts);
+            if (nav.obj.hasOwnProperty(nav.key)) {
+                nav.obj[nav.key] = value;
+            } else if (parts.length > 1) {
+                path = parts.slice(0,-2).concat([parts[parts.length-1]]).join('.');            
+                console.log('Key not found, trying',path,'instead');
+                update(obj, path, value);
             }
         };
         
@@ -55,11 +63,23 @@ var InputsEditor = React.createClass({
         };
         
         return function(value) {
-            var current = self.state.inputs;
+            var current = self.state;
             console.log('received action',action,'on path',path,'with value',value);
             
             // based on the action, react accordingly
             switch(action) {
+                case 'CREATE':
+                    // this signal is sent deeply by dropdown input
+                    // too lazy to generalize for now
+                    (function() {
+                        var nav = navigate(current, path.split('.'));
+                        var dropdownOptions = nav.obj[nav.key];
+                        dropdownOptions.push({
+                            name: '',
+                            price: ''
+                        });
+                    }());
+                    break;
                 case 'UPDATE':
                     update(current, path, value);
                     break;
@@ -67,15 +87,15 @@ var InputsEditor = React.createClass({
                     remove(current, path);
                     break;
                 case 'EDIT':
-                    self.setState({activeIndex: path});
+                    current.activeIndex = path.split('.')[1];
                     break;
                 case 'DONE':
-                    self.setState({activeIndex: -1});
+                    current.activeIndex = -1;
                     break;
             }
             
             // update the graph
-            self.setState({ inputs: current });
+            self.setState(current);
             
         };
     },
@@ -112,30 +132,47 @@ var InputsEditor = React.createClass({
         this.setState({inputs: currentInputs});        
     },
     render: function() {
+        // all the props, which should remain invariant for interaction within this component
         var className = this.props.className;
-        var inputs = this.state.inputs;
-        var self = this;
+        var currencies = this.props.currencies;
+        var maxDropdownOptions = this.props.maxDropdownOptions;
+        
+        // all the state, which alters based on user input
+        var inputs = this.state.inputs; // this is initially set by a prop of the same name
         var activeIndex = this.state.activeIndex;
+        var currency = this.state.currency;
+        var symbol = this.state.symbol;
+        
+        // handles "RESTful" calls from child components
+        var handle = this.handle;
+        
+        // computed
+        var allowMore = {
+            dropdowns: inputs.filter(function(input) { return input.type === 'dropdown' }).length < this.props.maxDropdowns,
+            textfields: inputs.filter(function(input) { return input.type === 'textfield' }).length < this.props.maxTextfields
+        };
+        
+        // components
         var inputComponents = inputs.map(function(input, index) {
             // DOUBLE EQUALS ARE INTENTIONAL
             switch(input.type) {
                 case 'dropdown':
-                    return <DropdownInputEditor active={activeIndex == index} key={index} jsonPath={index} trigger={self.handle} inputName={input.data.name} currency={input.currency} options={input.data.options} />;
+                    return <DropdownInputEditor active={activeIndex == index} key={index} jsonPath={'inputs.'+index} trigger={handle} inputName={input.data.name} currency={currency} currencies={currencies} options={input.data.options} max={maxDropdownOptions} />;
                 case 'textfield':
-                    return <TextfieldInputEditor active={activeIndex == index} key={index} jsonPath={index} trigger={self.handle} inputName={input.data.name} />;
+                    return <TextfieldInputEditor active={activeIndex == index} key={index} jsonPath={'inputs.'+index} trigger={handle} inputName={input.data.name} />;
             }
         });
         
         var result = (
             <div className={className}>
                 <h3>This is a preview</h3>
-                <Preview inputs={inputs} />
+                <Preview inputs={inputs} currency={currency} symbol={symbol} />
                 
                 <h3>This is the Options Editor</h3>
                 <button onClick={this.removeInputs}>Remove all inputs</button>
                 {inputComponents}
-                <button onClick={this.addDropdownInput}>Add dropdown input</button>
-                <button onClick={this.addTextfieldInput}>Add textfield input</button>
+                {allowMore.dropdowns ? <button onClick={this.addDropdownInput}>Add dropdown input</button> : null}
+                {allowMore.textfields ? <button onClick={this.addTextfieldInput}>Add textfield input</button> : null}
             </div>
         );
                 
@@ -146,11 +183,15 @@ var InputsEditor = React.createClass({
 var Preview = React.createClass({
     getDefaultProps: function() {
         return {
-            inputs: []
+            inputs: [],
+            currency: 'USD',
+            symbol: '$'
         };
     },
     render: function() {
         var inputs = this.props.inputs;
+        var symbol = this.props.symbol;
+        var currency = this.props.currency;
         
         return (
             <div>
@@ -164,7 +205,7 @@ var Preview = React.createClass({
                                     <select name={'input-'+index}>
                                     {
                                         input.data.options.map(function(selectOption, index) {
-                                            return <option key={index} value={selectOption.price}>{[selectOption.name,input.data.symbol,selectOption.price].join(' ')}</option>;
+                                            return <option key={index} value={selectOption.price}>{[selectOption.name,symbol,selectOption.price].join(' ')}</option>;
                                         })
                                     }
                                     </select>
@@ -194,7 +235,9 @@ var DropdownInputEditor = React.createClass({
             currency: 'USD',
             symbol: '$',
             key: 0,
-            active: false
+            active: false,
+            currencies: [],
+            max: 10
         };    
     },
     trigger: function(action, componentPath) {
@@ -212,10 +255,11 @@ var DropdownInputEditor = React.createClass({
         var className = this.props.className;
         var inputName = this.props.inputName;
         var currency = this.props.currency;
+        var currencies = this.props.currencies;
         var trigger = this.trigger;
         var active = this.props.active;
         var mode = active ? 'edit' : 'view';
-        var optionPriceFields = [];
+        var optionPriceFields = [], allowMoreOptions = false;
         if (active) {
             optionPriceFields = this.props.options.map(function(optionPrice, index) {
                 return (
@@ -224,11 +268,14 @@ var DropdownInputEditor = React.createClass({
                         optionName={optionPrice.name}
                         price={optionPrice.price}
                         currency={currency}
+                        currencies={currencies}
                         jsonPath={'data.options.'+index}
                         trigger={trigger}
+                        currencyChangeable={index === 0}
                     />
                 );
             });
+            allowMoreOptions = optionPriceFields.length < this.props.max;
         }
         var validator = function(value) {
             if (value.length === 0) {
@@ -241,6 +288,7 @@ var DropdownInputEditor = React.createClass({
                 <EditorWidget mode={mode} trigger={trigger}/>
                 <TextField disabled={!active} onChange={this.trigger('UPDATE', 'data.name')} label="Option name" value={inputName} className="paypal-input" validators={[validator]}/>
                 {optionPriceFields}
+                {allowMoreOptions ? <button onClick={this.trigger('CREATE', 'data.options')}>Add option</button> : null }
             </div>
         );
     }
@@ -253,8 +301,9 @@ var OptionPriceField = React.createClass({
             optionName: '',
             price: '',
             currency: 'USD',
+            currencies: [],
             removable: true,
-            key: 0
+            currencyChangeable: true
         }
     },
     trigger: function(action, componentPath) {
@@ -273,9 +322,16 @@ var OptionPriceField = React.createClass({
         var optionName = this.props.optionName;
         var price = this.props.price;
         var currency = this.props.currency;
+        var currencies = this.props.currencies;
         var trigger = this.trigger;
         var ownPath = this.props.jsonPath;
-        var deleteButton;
+        var currencyComponent, deleteButton;
+        
+        if (this.props.currencyChangeable) {
+            currencyComponent = <CurrencySelect onChange={trigger('UPDATE', 'currency')} currencies={currencies} selected={currency} />;
+        } else {
+            currencyComponent = <div className="currency-display">{currency}</div>;
+        }
         
         if (this.props.removable) {
             deleteButton = <button onClick={trigger('DELETE')}>Delete</button>
@@ -285,10 +341,44 @@ var OptionPriceField = React.createClass({
             <div className={className}>
                 <TextField onChange={trigger('UPDATE', 'name')} placeholder="Option" className="paypal-input" value={optionName} />
                 <TextField onChange={trigger('UPDATE', 'price')} placeholder="Price" className="paypal-input" value={price} />
-                <CurrencySelect />
+                {currencyComponent}
                 {deleteButton}
             </div>
         );        
+    }
+});
+
+// corresponds to currencyfield in the paypal project
+var CurrencySelect = React.createClass({
+    getDefaultProps: function () {
+        return {
+            currencies: [
+                { code: 'USD', symbol_native: '$' }
+            ],
+            selected: 'USD',
+            name: 'currency_code'
+        };
+    },
+    onChange: function(e) {
+        var onChange = this.props.onChange;
+        onChange && onChange(e.target.value);
+    },
+    render: function () {
+        var selected = this.props.selected;
+        var currencyList = this.props.currencyList;
+        var name = this.props.name;
+
+        return (
+            <div>
+                <select name={name} value={selected} onChange={this.onChange}>
+                {
+                    currencies.map(function(currency, index) {
+                        return <option key={index} value={currency.code}>{currency.code}</option>;
+                    })
+                }
+                </select>
+            </div>
+        );
     }
 });
 
