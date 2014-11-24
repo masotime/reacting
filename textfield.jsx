@@ -5,7 +5,8 @@
                 hints: [],
                 processed: false, // validated and error state added if any
                 hasFocus: false,
-                hasText: false
+                hasText: false,
+                value: ''
             };
         },
         getDefaultProps: function () {
@@ -14,6 +15,11 @@
                 validators: [],
                 helpers: [],
                 value: ''
+            }
+        },
+        componentWillMount: function() {
+            if (this.props.value) {
+                this.setState({ value: this.props.value });
             }
         },
         componentDidMount: function () {
@@ -40,10 +46,14 @@
             this.hint();
         },
         onChange: function () {
-            this.setState({ hasText: (this.refs.value.getDOMNode().value.length > 0) });
+            var inputEl = this.refs.value.getDOMNode();
+            this.setState({ 
+                hasText: (inputEl.value.length > 0),
+                value: (inputEl.value)
+            });
             this.hint();
             if (this.props.onChange) {
-                this.props.onChange(this.refs.value.getDOMNode().value);
+                this.props.onChange(inputEl.value);
             }
         },
         process: function () {
@@ -108,7 +118,7 @@
             return (
                 <div className={className}>
                     <label htmlFor={id}>{label}</label>
-                    <input type={inputType} id={id} name={name} placeholder={placeholder} onBlur={this.onBlur} onFocus={this.onFocus} onChange={this.onChange} ref="value" disabled={this.props.disabled} defaultValue={this.props.value} />
+                    <input type={inputType} id={id} name={name} placeholder={placeholder} onBlur={this.onBlur} onFocus={this.onFocus} onChange={this.onChange} ref="value" disabled={this.props.disabled} value={this.props.value} />
                     {clearWidget}
                     {tooltip}
                 </div>

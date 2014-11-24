@@ -184,8 +184,6 @@ var InputsEditor = React.createClass({
             type: 'dropdown',
             data: {
                 name: '',
-                currency: this.props.currency,
-                symbol: this.props.symbol,
                 options: [
                     {
                         name: '',
@@ -284,10 +282,10 @@ var Preview = React.createClass({
                             return (
                                 <div key={index}>
                                     <label>{input.data.name}</label>
-                                    <select name={'input-'+index}>
+                                    <select name={'input-'+index} defaultValue={input.data.options[0].name || 0}>
                                     {
                                         input.data.options.map(function(selectOption, index) {
-                                            return <option key={index} value={selectOption.price}>{[selectOption.name,symbol,selectOption.price].join(' ')}</option>;
+                                            return <option key={index} value={selectOption.name || index}>{[selectOption.name,symbol,selectOption.price].join(' ')}</option>;
                                         })
                                     }
                                     </select>
@@ -336,7 +334,7 @@ var DropdownInputEditor = React.createClass({
             optionPriceFields = this.props.options.map(function(optionPrice, index) {
                 return (
                     <OptionPriceField 
-                        key={index} 
+                        key={index}
                         optionName={optionPrice.name}
                         price={optionPrice.price}
                         currency={currency}
