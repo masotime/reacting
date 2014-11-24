@@ -163,14 +163,20 @@ var InputsEditor = React.createClass({
             case 'UPDATE':
                 util.update(current, path, value);
                 break;
-            case 'DELETE':
+            case 'DELETE': // delete option
                 util.remove(current, path);
                 break;
-            case 'EDIT':
+            case 'EDIT': // edit option
                 current.activeIndex = path.split('.')[1];
                 break;
-            case 'DONE':
+            case 'DONE': // done editing option
                 current.activeIndex = -1;
+                break;
+            case 'REMOVE PRICING':
+                util.update(current, path, false);
+                break;
+            case 'ADD PRICING':
+                util.update(current, path, true);
                 break;
         }
 
@@ -178,25 +184,35 @@ var InputsEditor = React.createClass({
         this.setState(current);
         
     },
-    addDropdownInput: function() {
-        var currentInputs = this.state.inputs;
-        currentInputs.push({
-            type: 'dropdown',
-            data: {
-                name: '',
-                options: [
-                    {
-                        name: '',
-                        price: ''
-                    },
-                    {
-                        name: '',
-                        price: ''
-                    }                    
-                ]
+    getDropdownWithPricing: function() {
+        // based upon the inputs in the state, determine which
+        // dropdown has pricing, if any, or return -1 otherwise.
+        return this.state.inputs.reduce(function(result, current, index) {
+            var hasPricing = current.type === 'dropdown' && current.data.hasPricing;
+            if (hasPricing) {
+                return index;
+            } else {
+                return result;
             }
-        });
-        this.setState({inputs: currentInputs});
+        }, -1);
+    },
+    addDropdownInput: function() {
+        var currentInputs = this.state.inputs,
+            hasPricingIndex = this.getDropdownWithPricing(),
+            newDropdownInput = { 
+                type: 'dropdown',
+                data: {
+                    name: '',
+                    hasPricing: hasPricingIndex === -1, // pricing only allowed if no other dropdown has pricing
+                    options: [
+                        { name: '', pricing: '' }, // pricing will be hidden if !hasPricing
+                        { name: '', pricing: '' }
+                    ]
+                }
+            };
+
+        currentInputs.push(newDropdownInput);
+        this.setState({inputs: currentInputs, activeIndex: currentInputs.length-1});
     },
     addTextfieldInput: function() {
         var currentInputs = this.state.inputs;
@@ -206,7 +222,7 @@ var InputsEditor = React.createClass({
                 name: ''
             }
         });
-        this.setState({inputs: currentInputs});        
+        this.setState({inputs: currentInputs, activeIndex: currentInputs.length-1});
     },
     render: function() {
         // all the props, which should remain invariant for interaction within this component
@@ -220,26 +236,40 @@ var InputsEditor = React.createClass({
         var currency = this.state.currency;
         var symbol = this.state.symbol;
         
-        // handles "RESTful" calls from child components
-        var handle = this.handle;
-        
         // computed
+        var hasPricingIndex = this.getDropdownWithPricing();
+        var handler = this.handleWith(this.handler);
         var allowMore = {
             dropdowns: inputs.filter(function(input) { return input.type === 'dropdown' }).length < this.props.maxDropdowns,
             textfields: inputs.filter(function(input) { return input.type === 'textfield' }).length < this.props.maxTextfields
         };
         
-        // experimental
-        var handler = this.handleWith(this.handler);
-        
         // components
         var inputComponents = inputs.map(function(input, index) {
-            // DOUBLE EQUALS ARE INTENTIONAL
+            // DOUBLE EQUALS ON activeIndex ARE INTENTIONAL
             switch(input.type) {
                 case 'dropdown':
-                    return <DropdownInputEditor active={activeIndex == index} key={index} jsonPath={'inputs.'+index} trigger={handler} inputName={input.data.name} currency={currency} currencies={currencies} options={input.data.options} max={maxDropdownOptions} />;
+                    return (<DropdownInputEditor 
+                        active={activeIndex == index} 
+                        key={index} 
+                        jsonPath={'inputs.'+index} 
+                        trigger={handler} 
+                        inputName={input.data.name} 
+                        currency={currency}
+                        currencies={currencies}
+                        options={input.data.options}
+                        max={maxDropdownOptions}
+                        hasPricing={hasPricingIndex === index}
+                        allowPricing={hasPricingIndex === -1} 
+                    />);
                 case 'textfield':
-                    return <TextfieldInputEditor active={activeIndex == index} key={index} jsonPath={'inputs.'+index} trigger={handler} inputName={input.data.name} />;
+                    return (<TextfieldInputEditor 
+                        active={activeIndex == index} 
+                        key={index} 
+                        jsonPath={'inputs.'+index} 
+                        trigger={handler} 
+                        inputName={input.data.name} 
+                    />);
             }
         });
         
@@ -285,7 +315,8 @@ var Preview = React.createClass({
                                     <select name={'input-'+index} defaultValue={input.data.options[0].name || 0}>
                                     {
                                         input.data.options.map(function(selectOption, index) {
-                                            return <option key={index} value={selectOption.name || index}>{[selectOption.name,symbol,selectOption.price].join(' ')}</option>;
+                                            var labelParts = [selectOption.name].concat(input.data.hasPricing ? [symbol, selectOption.price] : []);                                            
+                                            return <option key={index} value={selectOption.name || index}>{labelParts.join(' ')}</option>;
                                         })
                                     }
                                     </select>
@@ -315,10 +346,11 @@ var DropdownInputEditor = React.createClass({
             options: [],
             currency: 'USD',
             symbol: '$',
-            key: 0,
             active: false,
             currencies: [],
-            max: 10
+            max: 10,
+            hasPricing: false,
+            allowPricing: true
         };    
     },
     render: function() {
@@ -329,7 +361,9 @@ var DropdownInputEditor = React.createClass({
         var trigger = this.trigger;
         var active = this.props.active;
         var mode = active ? 'edit' : 'view';
-        var optionPriceFields = [], allowMoreOptions = false;
+        var hasPricing = this.props.hasPricing;
+        var allowPricing = this.props.allowPricing;
+        var optionPriceFields = [], togglePricingButton, allowMoreOptions = false;
         if (active) {
             optionPriceFields = this.props.options.map(function(optionPrice, index) {
                 return (
@@ -342,10 +376,18 @@ var DropdownInputEditor = React.createClass({
                         jsonPath={'data.options.'+index}
                         trigger={trigger}
                         currencyChangeable={index === 0}
+                        showPricing={hasPricing}
                     />
                 );
             });
+            
             allowMoreOptions = optionPriceFields.length < this.props.max;
+            
+            if (hasPricing) {
+                togglePricingButton = <button onClick={trigger('REMOVE PRICING', 'data.hasPricing')}>Remove pricing</button>;
+            } else if (allowPricing) {
+                togglePricingButton = <button onClick={trigger('ADD PRICING', 'data.hasPricing')}>Add pricing</button>;
+            }
         }
         var validator = function(value) {
             if (value.length === 0) {
@@ -356,6 +398,7 @@ var DropdownInputEditor = React.createClass({
         return (
             <div className={className}>
                 <EditorWidget mode={mode} trigger={trigger}/>
+                {togglePricingButton}
                 <TextField disabled={!active} onChange={this.trigger('UPDATE', 'data.name')} label="Option name" value={inputName} className="paypal-input" validators={[validator]}/>
                 {optionPriceFields}
                 {allowMoreOptions ? <button onClick={this.trigger('CREATE', 'data.options')}>Add option</button> : null }
@@ -370,11 +413,11 @@ var OptionPriceField = React.createClass({
         return {
             className: 'option-price',
             optionName: '',
-            price: '',
             currency: 'USD',
             currencies: [],
             removable: true,
-            currencyChangeable: true
+            currencyChangeable: true,
+            showPricing: false
         }
     },
     render: function() {
@@ -385,22 +428,38 @@ var OptionPriceField = React.createClass({
         var currencies = this.props.currencies;
         var trigger = this.trigger;
         var ownPath = this.props.jsonPath;
-        var currencyComponent, deleteButton;
+        var currencyChangeable = this.props.currencyChangeable;
+        var showPricing = this.props.showPricing;
+        var priceComponent, currencyComponent, deleteButton;
         
-        if (this.props.currencyChangeable) {
-            currencyComponent = <CurrencySelect onChange={trigger('UPDATE', 'currency')} currencies={currencies} selected={currency} />;
-        } else {
-            currencyComponent = <div className="currency-display">{currency}</div>;
+        if (showPricing) {
+            priceComponent = <TextField 
+                onChange={trigger('UPDATE', 'price')}
+                placeholder="Price"
+                className="paypal-input"
+                value={price} />;
+            if (currencyChangeable) {
+                currencyComponent = <CurrencySelect 
+                    onChange={trigger('UPDATE', 'currency')} 
+                    currencies={currencies} 
+                    selected={currency} />;
+            } else {
+                currencyComponent = <div className="currency-display">{currency}</div>;
+            }
         }
         
         if (this.props.removable) {
-            deleteButton = <button onClick={trigger('DELETE')}>Delete</button>
+            deleteButton = <button onClick={trigger('DELETE')}>Delete</button>;
         }
         
         return (
             <div className={className}>
-                <TextField onChange={trigger('UPDATE', 'name')} placeholder="Option" className="paypal-input" value={optionName} />
-                <TextField onChange={trigger('UPDATE', 'price')} placeholder="Price" className="paypal-input" value={price} />
+                <TextField 
+                    onChange={trigger('UPDATE', 'name')} 
+                    placeholder="Option" 
+                    className="paypal-input" 
+                    value={optionName} />
+                {priceComponent}
                 {currencyComponent}
                 {deleteButton}
             </div>
@@ -462,7 +521,6 @@ var TextfieldInputEditor = React.createClass({
                 return 'Please give a name for this option';
             }
         };
-        
         
         return (
             <div className={className}>
