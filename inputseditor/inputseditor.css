@@ -30,6 +30,21 @@ input[type="text"] {
 
 /* dropdown editor convenience styling */
 
+#preview {
+    padding: 1em;
+    border: 1px solid #000;
+    width: 20em;
+    margin-bottom: 1em;
+}
+
+#preview::before {
+    content: 'This is a preview';
+    display: inline-block;
+    padding-bottom: 1em;
+    font-weight: 600;
+    font-size: 1em;
+}
+
 .inputs-editor {
     max-width: 20em;
 }

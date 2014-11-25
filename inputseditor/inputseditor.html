@@ -1,0 +1,106 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="inputseditor.css" />
+        <script src="//fb.me/react-0.12.0.js"></script>
+        <script src="//fb.me/JSXTransformer-0.12.0.js"></script>        
+    </head>
+    <body>
+        <h1>Button Factory Inputs Editor</h1>
+        <div id="preview">
+        </div>
+        <div id="inputs-editor">
+        </div>
+        <script src="../mixins/trigger-mixin.js"></script>
+        <script type="text/jsx" src="inputseditor.jsx"></script>
+        <script type="text/jsx" src="../components/textfield.jsx"></script>
+        <script type="text/jsx" src="../components/productpricefield.jsx"></script>
+        <script type="text/jsx">
+            // this maintains an "application state" 
+            var Store = (function() {
+            
+                var internalStore = {
+                    currencies: [
+                        { code: 'USD', symbol_native: '$' },
+                        { code: 'EUR', symbol_native: '€' },
+                        { code: 'GBP', symbol_native: '£' },
+                        { code: 'INR', symbol_native: '₹' },
+                        { code: 'JPY', symbol_native: '¥' },
+                        { code: 'CNY', symbol_native: '¥' }
+                    ],
+                    currency: 'USD',
+                    symbol: '$',
+                    inputs: [
+                        {
+                            type: 'dropdown',
+                            data: {
+                                hasPricing: true,
+                                name: 'Color',
+                                options: [
+                                    {
+                                        name: 'Red',
+                                        price: '1'
+                                    },
+                                    {
+                                        name: 'Green',
+                                        price: '1.5'
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            type: 'textfield',
+                            data: {
+                                name: 'Wording'
+                            }
+                        }
+                    ]
+                };
+                
+                // each path will map to whatever is listening on that path
+                var pullers = {
+                    'inputs': []
+                };
+                
+                return {
+                    get: function(path) {
+                        return internalStore[path]; // again, this needs to be navigated like a cursor
+                    },
+                    push: function(path, value) {
+                        // just push to inputs for now
+                        path = 'inputs'; // remove hardcode later
+                        
+                        internalStore[path] = value; // this needs to be navigated rather than dumped this way
+                        
+                        // go to relevant listeners. Recursion needed in the future?
+                        pullers[path].forEach(function(puller) {
+                            // puller is a function
+                            puller(value); // throw the updated value to listeners
+                        });
+                    },
+                    pull: function(path, callback) {
+                        // register a puller. callbacks should be bound to the scope
+                        // of the component (i.e. .bind(this))
+                        path = 'inputs'; // remove hardcode later
+                        pullers[path].push(callback);
+                    }
+                };
+            }());
+            
+            var render = function() {
+                React.render(
+                    <InputsEditor inputs={Store.get('inputs')} currencies={Store.get('currencies')} currency={Store.get('currency')} symbol={Store.get('symbol')} store={Store} />
+                    , document.getElementById('inputs-editor')
+                );
+
+                React.render(
+                    <Preview inputs={Store.get('inputs')} currency={Store.get('currency')} symbol={Store.get('symbol')} store={Store} />
+                    , document.getElementById('preview')
+
+                );
+            };
+            
+            render();
+            
+        </script>
+    </body>
+</html>

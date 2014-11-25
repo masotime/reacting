@@ -1,118 +1,3 @@
-// provides a way to cascade mutation events from nested components to the top level component
-// A deeply nested component that receives a state-mutating event should bind it with the "trigger" higher-order
-// function (that returns a function) bound to an action and a _relative_ path of the JSON tree structure to be
-// affected. The parent component's jsonPath prop will be combined with the child component and both an "action"
-// (similar to a RESTful verb) and a "value" is cascaded up.
-//
-// For example, assuming that <Container> contains a JSON state object with the following structure:
-// {
-//   data: {
-//     names: [ { firstName: 'someName' } ]
-//   }
-// }      
-//
-// <Container> render():
-//   <Component1 jsonPath="data" trigger={this.handleWith(this.handler)} />
-//
-// <Component1> render():
-//   <Component2 jsonPath="names.0" trigger={this.trigger} />
-//
-// <Component2> render():
-//   <input type="text" onChange="{trigger('UPDATE', 'firstName')}" />
-//
-// when there is change event in the nested <input> component in Component2,
-// it cascades up to Component1 (which is a passthrough) and prepends "names.0", and finally at
-// Container it is received under the "handler" function as "inputs.names.0.firstName" with the action "UPDATE"
-// and the value representing the first argument for the onChange handler (in this case the DOM event e)
-//
-// Notes: 
-// 1. All nested components must declare a "trigger" prop bound to the trigger mixin method so that
-// events can be cascaded upwards. In this example, <Container> is the top of the hierarchy and doesn't need it
-// 2. A jsonPath definition not not necessary on all points in the hierarchy. If not defined, nothing is prepended
-// in the propagating chain.
-// 3. Only the lowest level component that receives the event should use the trigger(ACTION,PATH) syntax.
-// Intermediate components should simply supply the trigger higher order function directly without invoking it.
-//
-// handleWith is a convenience method that invokes the handler function passed in with the arguments
-// (path, action, value, util), where util is a convenience object that provides functions such as navigate,
-// update and remove. For example, given the above, we can write the handler as follows:
-//
-// function handler(path, action, value, util) {
-//    var state = this.state;
-//    var domEvent = value;
-//    if (action === 'UPDATE') util.update(state, path, domEvent.target.value);
-//    this.setState(state);
-// }
-//
-// the update utility function will automatically traverse to data.names[0].firstName and update
-// it as appropriate.
-var TriggerMixin = (function () {
-
-    // these are utility functions that are agnostic to "this"
-    function navigate(obj, trail) {
-        if (trail.length <= 1 || !obj.hasOwnProperty(trail[0])) {
-            return { obj: obj, key: trail[0] };
-        } else {
-            return navigate(obj[trail[0]], trail.slice(1));
-        }
-    }
-    
-    function update(obj, path, value) {
-        var parts = path.split('.');
-        var nav = navigate(obj, parts);
-        if (nav.obj.hasOwnProperty(nav.key)) {
-            nav.obj[nav.key] = value;
-        } else if (parts.length > 1) {
-            path = parts.slice(0,-2).concat([parts[parts.length-1]]).join('.');            
-            console.log('Key not found, trying',path,'instead');
-            update(obj, path, value);
-        }
-    }
-
-    function remove(obj, path) {
-        var nav = navigate(obj, path.split('.'));
-        var obj = nav.obj;
-        var key = nav.key;
-
-        // respond according to the type
-        if (Array.isArray(obj)) {
-            obj.splice(key,1);
-        } else {
-            delete obj.key;
-        }
-    }    
-
-    var util = {
-        navigate: navigate,
-        update: update,
-        remove: remove
-    };
-
-    return {
-        trigger: function(action, componentPath) {
-            var upstreamTrigger = this.props.trigger,
-                ownPath = this.props.jsonPath;
-
-            return function onChange(value) {
-                var upstreamPath = [ownPath, componentPath].reduce(function (acc, current) {
-                    var wellFormedPath = current !== undefined && current.toString().length > 0;
-                    return wellFormedPath && acc.concat(current.toString().split('.')) || acc;
-                }, []).join('.');
-                upstreamTrigger && upstreamTrigger(action, upstreamPath)(value);
-            };
-        },
-        handleWith: function handleWith(handler) {
-            return function cascader(action, path) {
-                return function handle(value) {
-                    // React automagically binds "this" to the function so we don't have to care
-                    // about this references in the handler
-                    handler(action, path, value, util);
-                }
-            }
-        }
-    };
-}());
-
 var InputsEditor = React.createClass({
     mixins: [TriggerMixin],
     getDefaultProps: function() {
@@ -139,15 +24,17 @@ var InputsEditor = React.createClass({
             symbol: '$'
         };
     },
-    removeInputs: function() {
-        this.setState({inputs: []});
-    },
-    handler: function(action, path, value, util) {
-        var current = this.state;
+    controller: function(action, path, value, util) {
+        var current = this.state,
+            hasPricingIndex = this.getDropdownWithPricing();
+
         console.log('received action',action,'on path',path,'with value',value);
 
         // based on the action, react accordingly
         switch(action) {
+            case 'RESET':
+                current.inputs = [];
+                break;
             case 'CREATE':
                 // this signal is sent deeply by dropdown input
                 // too lazy to generalize for now
@@ -178,10 +65,34 @@ var InputsEditor = React.createClass({
             case 'ADD PRICING':
                 util.update(current, path, true);
                 break;
+            case 'APPEND DROPDOWN':
+                current.inputs.push({ 
+                    type: 'dropdown',
+                    data: {
+                        name: '',
+                        hasPricing: hasPricingIndex === -1, // pricing only allowed if no other dropdown has pricing
+                        options: [
+                            { name: '', price: '' }, // pricing will be hidden if !hasPricing
+                            { name: '', price: '' }
+                        ]
+                    }
+                });
+                current.activeIndex = current.inputs.length - 1;
+                break;
+            case 'APPEND TEXTFIELD':
+                current.inputs.push({
+                    type: 'textfield',
+                    data: { name: '' }
+                });
+                current.activeIndex = current.inputs.length - 1;
+                break;
         }
 
         // update the graph
         this.setState(current);
+        
+        // update the store
+        this.props.store && this.props.store.push('inputs', current.inputs);
         
     },
     getDropdownWithPricing: function() {
@@ -195,34 +106,6 @@ var InputsEditor = React.createClass({
                 return result;
             }
         }, -1);
-    },
-    addDropdownInput: function() {
-        var currentInputs = this.state.inputs,
-            hasPricingIndex = this.getDropdownWithPricing(),
-            newDropdownInput = { 
-                type: 'dropdown',
-                data: {
-                    name: '',
-                    hasPricing: hasPricingIndex === -1, // pricing only allowed if no other dropdown has pricing
-                    options: [
-                        { name: '', pricing: '' }, // pricing will be hidden if !hasPricing
-                        { name: '', pricing: '' }
-                    ]
-                }
-            };
-
-        currentInputs.push(newDropdownInput);
-        this.setState({inputs: currentInputs, activeIndex: currentInputs.length-1});
-    },
-    addTextfieldInput: function() {
-        var currentInputs = this.state.inputs;
-        currentInputs.push({
-            type: 'textfield',
-            data: {
-                name: ''
-            }
-        });
-        this.setState({inputs: currentInputs, activeIndex: currentInputs.length-1});
     },
     render: function() {
         // all the props, which should remain invariant for interaction within this component
@@ -238,7 +121,7 @@ var InputsEditor = React.createClass({
         
         // computed
         var hasPricingIndex = this.getDropdownWithPricing();
-        var handler = this.handleWith(this.handler);
+        var controller = this.handleWith(this.controller);
         var allowMore = {
             dropdowns: inputs.filter(function(input) { return input.type === 'dropdown' }).length < this.props.maxDropdowns,
             textfields: inputs.filter(function(input) { return input.type === 'textfield' }).length < this.props.maxTextfields
@@ -253,7 +136,7 @@ var InputsEditor = React.createClass({
                         active={activeIndex == index} 
                         key={index} 
                         jsonPath={'inputs.'+index} 
-                        trigger={handler} 
+                        trigger={controller} 
                         inputName={input.data.name} 
                         currency={currency}
                         currencies={currencies}
@@ -267,7 +150,7 @@ var InputsEditor = React.createClass({
                         active={activeIndex == index} 
                         key={index} 
                         jsonPath={'inputs.'+index} 
-                        trigger={handler} 
+                        trigger={controller} 
                         inputName={input.data.name} 
                     />);
             }
@@ -275,14 +158,12 @@ var InputsEditor = React.createClass({
         
         var result = (
             <div className={className}>
-                <h3>This is a preview</h3>
-                <Preview inputs={inputs} currency={currency} symbol={symbol} />
                 
                 <h3>This is the Options Editor</h3>
-                <button onClick={this.removeInputs}>Remove all inputs</button>
+                <button onClick={controller('RESET')}>Remove all inputs</button>
                 {inputComponents}
-                {allowMore.dropdowns ? <button onClick={this.addDropdownInput}>Add dropdown input</button> : null}
-                {allowMore.textfields ? <button onClick={this.addTextfieldInput}>Add textfield input</button> : null}
+                {allowMore.dropdowns ? <button onClick={controller('APPEND DROPDOWN')}>Add dropdown input</button> : null}
+                {allowMore.textfields ? <button onClick={controller('APPEND TEXTFIELD')}>Add textfield input</button> : null}
             </div>
         );
                 
@@ -298,8 +179,21 @@ var Preview = React.createClass({
             symbol: '$'
         };
     },
+    componentWillMount: function() {
+        var self = this;
+        this.setState({inputs: this.props.inputs || []});
+        if (this.props.store) {
+            // register a callback
+            this.props.store.pull('inputs', function(updatedInputs) {
+                self.setState({inputs: updatedInputs});
+            });
+        }
+    },
+    componentWillUnmount: function() {
+        // need to deregister at some point
+    },
     render: function() {
-        var inputs = this.props.inputs;
+        var inputs = this.state.inputs;
         var symbol = this.props.symbol;
         var currency = this.props.currency;
         
@@ -485,6 +379,7 @@ var CurrencySelect = React.createClass({
     render: function () {
         var selected = this.props.selected;
         var currencyList = this.props.currencyList;
+        var currencies = this.props.currencies;
         var name = this.props.name;
 
         return (
